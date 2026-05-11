@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PulseNet Extension</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Inter',sans-serif; background:#080b14; color:#F0F4FF;
+    width:300px; padding:0; overflow:hidden;
+  }
+  .header{
+    background:linear-gradient(135deg,rgba(0,212,255,0.15),rgba(124,58,237,0.15));
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    padding:16px; display:flex; align-items:center; gap:10px;
+  }
+  .logo{font-size:22px;}
+  .brand{font-size:15px;font-weight:700;background:linear-gradient(135deg,#00D4FF,#7C3AED);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .version{font-size:10px;color:#4A5568;margin-top:1px;}
+
+  .body{padding:16px;}
+
+  /* Toggle */
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;
+    background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+    border-radius:12px;padding:14px;}
+  .toggle-label{font-size:13px;font-weight:600;}
+  .toggle-sub{font-size:11px;color:#8B9AB3;margin-top:2px;}
+  .switch{position:relative;width:44px;height:24px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;inset:0;background:#1e2535;border-radius:24px;
+    transition:.3s;cursor:pointer;}
+  .slider::before{content:'';position:absolute;width:18px;height:18px;
+    background:#8B9AB3;border-radius:50%;top:3px;left:3px;transition:.3s;}
+  input:checked + .slider{background:linear-gradient(135deg,#00D4FF,#7C3AED);}
+  input:checked + .slider::before{background:#fff;transform:translateX(20px);}
+
+  /* Score card */
+  .score-card{margin-top:12px;background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;text-align:center;}
+  .score-label{font-size:11px;color:#8B9AB3;text-transform:uppercase;letter-spacing:0.5px;}
+  .score-value{font-size:36px;font-weight:800;margin:4px 0;
+    background:linear-gradient(135deg,#00D4FF,#7C3AED);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .score-cat{font-size:12px;font-weight:600;padding:3px 10px;border-radius:100px;
+    display:inline-block;margin-top:2px;}
+
+  /* Status */
+  .status-row{margin-top:10px;display:flex;align-items:center;gap:6px;
+    background:rgba(255,255,255,0.03);border-radius:8px;padding:10px;}
+  .dot{width:8px;height:8px;border-radius:50%;background:#34C759;flex-shrink:0;
+    animation:blink 2s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  .dot.off{background:#4A5568;animation:none;}
+  .status-text{font-size:11px;color:#8B9AB3;}
+
+  /* Actions */
+  .actions{margin-top:12px;display:flex;flex-direction:column;gap:8px;}
+  .btn{display:flex;align-items:center;justify-content:center;gap:6px;
+    padding:10px;border-radius:10px;font-family:inherit;font-size:13px;
+    font-weight:600;cursor:pointer;border:none;transition:all .2s;text-decoration:none;}
+  .btn-primary{background:linear-gradient(135deg,#00D4FF,#7C3AED);color:#fff;}
+  .btn-primary:hover{opacity:0.9;transform:translateY(-1px);}
+  .btn-ghost{background:rgba(255,255,255,0.05);color:#F0F4FF;border:1px solid rgba(255,255,255,0.08);}
+  .btn-ghost:hover{background:rgba(255,255,255,0.1);}
+
+  /* Sites */
+  .sites{margin-top:12px;}
+  .sites-label{font-size:10px;color:#4A5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+  .site-tags{display:flex;gap:6px;flex-wrap:wrap;}
+  .site-tag{font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;
+    background:rgba(255,255,255,0.05);color:#8B9AB3;border:1px solid rgba(255,255,255,0.06);}
+  .site-tag.active{color:#00D4FF;border-color:rgba(0,212,255,0.3);background:rgba(0,212,255,0.08);}
+</style>
+</head>
+<body>
+  <div class="header">
+    <span class="logo">🧠</span>
+    <div>
+      <div class="brand">PulseNet</div>
+      <div class="version">Mental Health Monitor v1.0</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">Monitoring Active</div>
+        <div class="toggle-sub">Analyze social media posts</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toggle" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="score-card">
+      <div class="score-label">Last Distress Score</div>
+      <div class="score-value" id="scoreVal">--</div>
+      <div class="score-cat" id="scoreCat" style="color:#8B9AB3;border:1px solid rgba(255,255,255,0.08);">No data yet</div>
+    </div>
+
+    <div class="status-row">
+      <div class="dot" id="statusDot"></div>
+      <span class="status-text" id="statusText">Waiting for social media posts…</span>
+    </div>
+
+    <div class="actions">
+      <a class="btn btn-primary" id="dashBtn" href="#" target="_blank">📊 Open Dashboard</a>
+      <button class="btn btn-ghost" id="clearBtn">🗑️ Clear Badge</button>
+    </div>
+
+    <div class="sites">
+      <div class="sites-label">Active on</div>
+      <div class="site-tags">
+        <span class="site-tag active" id="tag-twitter">Twitter/X</span>
+        <span class="site-tag active" id="tag-instagram">Instagram</span>
+        <span class="site-tag active" id="tag-linkedin">LinkedIn</span>
+      </div>
+    </div>
+  </div>
+
+<script src="popup.js"></script>
+</body>
+</html>

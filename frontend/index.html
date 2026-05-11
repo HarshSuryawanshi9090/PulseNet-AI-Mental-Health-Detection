@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PulseNet — Consent-based AI Mental Health Early Warning System. Detect emotional distress in social media posts before it becomes a crisis.">
+  <title>PulseNet — AI Mental Health Early Warning System</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Landing-specific styles ── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 60px;
+      background: rgba(8,11,20,0.8); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo-icon { font-size: 28px; }
+    .nav-logo-text { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; }
+    .nav-links { display: flex; align-items: center; gap: 32px; }
+    .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 500; transition: var(--transition); }
+    .nav-links a:hover { color: var(--text-primary); }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center;
+      padding: 120px 20px 60px; position: relative; z-index: 1;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.25);
+      border-radius: 100px; padding: 6px 16px; font-size: 12px; font-weight: 600;
+      color: var(--accent); margin-bottom: 28px; animation: fadeInUp 0.5s ease;
+    }
+    .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: pulse-ring 1.5s infinite; }
+    .hero h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(40px, 7vw, 80px); font-weight: 700; line-height: 1.1;
+      margin-bottom: 24px; animation: fadeInUp 0.6s ease 0.1s both;
+    }
+    .hero p {
+      font-size: clamp(16px, 2vw, 20px); color: var(--text-secondary); max-width: 600px;
+      margin: 0 auto 40px; animation: fadeInUp 0.6s ease 0.2s both;
+    }
+    .hero-cta { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; animation: fadeInUp 0.6s ease 0.3s both; }
+    .hero-cta .btn { padding: 14px 32px; font-size: 16px; }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex; gap: 0; justify-content: center; flex-wrap: wrap;
+      margin: 60px auto; max-width: 900px;
+    }
+    .stat { flex: 1; min-width: 200px; text-align: center; padding: 24px; position: relative; }
+    .stat::after { content: ''; position: absolute; right: 0; top: 20%; height: 60%; width: 1px; background: var(--border); }
+    .stat:last-child::after { display: none; }
+    .stat-num { font-family: 'Space Grotesk', sans-serif; font-size: 40px; font-weight: 700; }
+    .stat-label { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+    /* ── Problem section ── */
+    .section { padding: 80px 60px; position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; }
+    .section-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); margin-bottom: 12px; }
+    .section-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(28px, 4vw, 44px); font-weight: 700; margin-bottom: 16px; }
+    .section-sub { color: var(--text-secondary); font-size: 17px; max-width: 560px; }
+
+    /* ── Problem cards ── */
+    .problem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 48px; }
+    .problem-card { padding: 28px; border-radius: var(--radius-md); position: relative; overflow: hidden; }
+    .problem-card::before {
+      content: ''; position: absolute; inset: 0; opacity: 0.06;
+      background: linear-gradient(135deg, var(--crisis), transparent);
+      pointer-events: none;
+    }
+    .problem-card .icon { font-size: 32px; margin-bottom: 16px; }
+    .problem-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .problem-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+    /* ── Feature cards ── */
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin-top: 48px; }
+    .feature-card { padding: 32px; border-radius: var(--radius-md); position: relative; overflow: hidden; transition: var(--transition); }
+    .feature-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-glow); }
+    .feature-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--accent-grad);
+    }
+    .feature-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 20px; }
+    .feature-icon.blue  { background: rgba(0,212,255,0.12);  }
+    .feature-icon.purple{ background: rgba(124,58,237,0.12); }
+    .feature-icon.green { background: rgba(52,199,89,0.12);  }
+    .feature-icon.orange{ background: rgba(255,149,0,0.12);  }
+    .feature-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .feature-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+    /* ── Workflow ── */
+    .workflow { display: flex; flex-direction: column; gap: 0; margin-top: 48px; }
+    .workflow-step { display: flex; gap: 24px; align-items: flex-start; padding: 24px 0; position: relative; }
+    .workflow-step::before {
+      content: ''; position: absolute; left: 19px; top: 60px; bottom: -10px;
+      width: 2px; background: linear-gradient(to bottom, var(--accent), var(--accent-2));
+    }
+    .workflow-step:last-child::before { display: none; }
+    .step-num {
+      width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+      background: var(--accent-grad); display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 800; color: #fff; position: relative; z-index: 1;
+    }
+    .step-content h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    .step-content p { font-size: 14px; color: var(--text-secondary); }
+
+    /* ── CTA Section ── */
+    .cta-section {
+      margin: 40px 60px 80px; padding: 60px;
+      background: linear-gradient(135deg, rgba(0,212,255,0.08), rgba(124,58,237,0.08));
+      border: 1px solid var(--border-glow); border-radius: var(--radius-xl);
+      text-align: center; position: relative; z-index: 1; overflow: hidden;
+    }
+    .cta-section::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, rgba(0,212,255,0.05), transparent 70%);
+    }
+    .cta-section h2 { font-family: 'Space Grotesk', sans-serif; font-size: 36px; font-weight: 700; margin-bottom: 16px; }
+    .cta-section p { color: var(--text-secondary); font-size: 17px; margin-bottom: 32px; }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border); padding: 32px 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px; position: relative; z-index: 1;
+    }
+    footer p { font-size: 13px; color: var(--text-muted); }
+    .helplines { display: flex; gap: 24px; flex-wrap: wrap; }
+    .helpline { font-size: 12px; color: var(--text-secondary); }
+    .helpline span { color: var(--accent); font-weight: 600; }
+
+    @media (max-width: 768px) {
+      .nav { padding: 14px 20px; }
+      .nav-links { display: none; }
+      .section { padding: 60px 20px; }
+      .cta-section { margin: 20px; padding: 40px 24px; }
+      footer { padding: 24px 20px; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a class="nav-logo" href="index.html">
+      <span class="nav-logo-icon">🧠</span>
+      <span class="nav-logo-text gradient-text">PulseNet</span>
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How it Works</a>
+      <a href="#problem">Problem</a>
+    </div>
+    <a class="btn btn-primary" href="dashboard.html" id="openDashboard">Open Dashboard →</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge"><span class="pulse-dot"></span>AI-Powered Mental Health Detection</div>
+    <h1>Catch the Crisis<br><span class="gradient-text">Before It's Too Late</span></h1>
+    <p>PulseNet detects emotional distress in social media posts using AI — giving users self-awareness and alerting trusted guardians when it matters most.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="dashboard.html" id="heroDash">📊 Open Dashboard</a>
+      <a class="btn btn-ghost" href="#how-it-works">See How It Works ↓</a>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-bar" style="position:relative;z-index:1;">
+    <div class="stat"><div class="stat-num gradient-text">56M+</div><div class="stat-label">People with depression in India</div></div>
+    <div class="stat"><div class="stat-num gradient-text">9,000</div><div class="stat-label">Psychiatrists for 1.4B population</div></div>
+    <div class="stat"><div class="stat-num gradient-text">0–100</div><div class="stat-label">Distress score with AI precision</div></div>
+    <div class="stat"><div class="stat-num gradient-text">&lt;1s</div><div class="stat-label">Real-time analysis per post</div></div>
+  </div>
+
+  <!-- PROBLEM -->
+  <section class="section" id="problem">
+    <div class="section-label">⚠️ The Problem</div>
+    <h2 class="section-title">Mental Health Crises Go <span class="gradient-text">Unnoticed</span></h2>
+    <p class="section-sub">People express distress indirectly on social media — hopelessness, isolation, goodbye messages — but no one is listening at scale.</p>
+    <div class="problem-grid">
+      <div class="problem-card card">
+        <div class="icon">😶</div>
+        <h3>Indirect Expression</h3>
+        <p>Distress is rarely direct. People post hopelessness, isolation, and farewell language that goes unrecognized by friends and algorithms alike.</p>
+      </div>
+      <div class="problem-card card">
+        <div class="icon">⏰</div>
+        <h3>Too Late to Help</h3>
+        <p>Friends and family realize crisis moments only after the fact. Early signals are missed because there's no system to track emotional trends.</p>
+      </div>
+      <div class="problem-card card">
+        <div class="icon">🏥</div>
+        <h3>No Scalable System</h3>
+        <p>With only 9,000 psychiatrists for 1.4B people, professional help is inaccessible. Early AI detection fills this critical gap.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section" id="features">
+    <div class="section-label">🌟 Features</div>
+    <h2 class="section-title">Everything You Need for <span class="gradient-text">Early Intervention</span></h2>
+    <p class="section-sub">Four powerful modules working together to protect mental wellbeing.</p>
+    <div class="features-grid">
+      <div class="feature-card card">
+        <div class="feature-icon blue">🧠</div>
+        <h3>NLP Distress Detector</h3>
+        <p>AI model scores posts 0–100 using keyword weighting, sentiment analysis, and crisis phrase detection. BERT-ready architecture.</p>
+      </div>
+      <div class="feature-card card">
+        <div class="feature-icon purple">🔌</div>
+        <h3>Browser Extension</h3>
+        <p>Chrome/Firefox extension auto-captures your social media captions on Twitter, Instagram, LinkedIn. Consent-first, always in your control.</p>
+      </div>
+      <div class="feature-card card">
+        <div class="feature-icon green">📊</div>
+        <h3>Wellness Dashboard</h3>
+        <p>7-day emotional trend chart, animated distress gauge, post history, and personalized wellness insights — all in a beautiful dark UI.</p>
+      </div>
+      <div class="feature-card card">
+        <div class="feature-icon orange">🤝</div>
+        <h3>Guardian Nudge System</h3>
+        <p>Add trusted friends or family. When distress crosses threshold, they receive an automatic alert with resources and context.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section" id="how-it-works">
+    <div class="section-label">🔄 Workflow</div>
+    <h2 class="section-title">How <span class="gradient-text">PulseNet Works</span></h2>
+    <div class="workflow">
+      <div class="workflow-step">
+        <div class="step-num">1</div>
+        <div class="step-content"><h3>You Post on Social Media</h3><p>PulseNet's browser extension runs in the background with your consent, observing your own posts only.</p></div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-num">2</div>
+        <div class="step-content"><h3>Extension Captures Captions</h3><p>Post text is extracted privately and sent to the PulseNet backend API for analysis.</p></div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-num">3</div>
+        <div class="step-content"><h3>AI Scores the Text</h3><p>NLP model analyzes sentiment, crisis keywords, and isolation language to produce a Distress Score (0–100).</p></div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-num">4</div>
+        <div class="step-content"><h3>Dashboard Updates</h3><p>Your 7-day emotional trend chart updates in real time. You see patterns you might not notice yourself.</p></div>
+      </div>
+      <div class="workflow-step">
+        <div class="step-num">5</div>
+        <div class="step-content"><h3>Guardian Notified</h3><p>If score crosses your set threshold, a trusted guardian receives an automated alert with helpline resources.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <h2>Start Monitoring Your <span class="gradient-text">Mental Wellness</span></h2>
+    <p>Consent-based, private by design, and built to save lives. Open the dashboard to get started.</p>
+    <a class="btn btn-primary" href="dashboard.html" style="font-size:16px;padding:14px 36px;" id="ctaDash">🚀 Launch Dashboard</a>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>© 2024 PulseNet — Consent-Based AI Mental Health Detection. Built with ❤️ for India.</p>
+    <div class="helplines">
+      <div class="helpline">iCall: <span>9152987821</span></div>
+      <div class="helpline">AASRA: <span>9820466627</span></div>
+      <div class="helpline">Vandrevala: <span>1860-2662-345</span></div>
+    </div>
+  </footer>
+
+  <script>
+    // Animate stats on scroll
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('animate-in'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.problem-card,.feature-card,.workflow-step').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>

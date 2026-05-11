@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulseNet — Wellness Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Layout ── */
+    .app { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 240px; flex-shrink: 0; background: var(--bg-secondary);
+      border-right: 1px solid var(--border); display: flex; flex-direction: column;
+      padding: 24px 0; position: sticky; top: 0; height: 100vh; z-index: 10;
+    }
+    .sidebar-logo { padding: 0 20px 24px; border-bottom: 1px solid var(--border); }
+    .sidebar-logo a { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .sidebar-logo-icon { font-size: 24px; }
+    .sidebar-logo-text { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; }
+
+    .sidebar-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px; font-size: 14px; font-weight: 500;
+      color: var(--text-secondary); text-decoration: none; cursor: pointer;
+      border: none; background: transparent; width: 100%; transition: var(--transition);
+    }
+    .nav-item:hover { background: var(--bg-card); color: var(--text-primary); }
+    .nav-item.active { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.2); }
+    .nav-item .icon { font-size: 18px; width: 24px; text-align: center; }
+
+    .sidebar-footer { padding: 16px 12px; border-top: 1px solid var(--border); }
+    .api-status {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; border-radius: 10px;
+      background: var(--bg-card); font-size: 12px; color: var(--text-secondary);
+    }
+    .api-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--healthy); }
+    .api-dot.offline { background: var(--crisis); animation: none; }
+
+    /* ── Main ── */
+    .main { flex: 1; overflow-y: auto; background: var(--bg-primary); }
+
+    /* ── Topbar ── */
+    .topbar {
+      padding: 20px 32px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(8,11,20,0.8); backdrop-filter: blur(20px);
+      position: sticky; top: 0; z-index: 9;
+    }
+    .topbar-title h1 { font-size: 20px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; }
+    .topbar-title p { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+    .topbar-actions { display: flex; align-items: center; gap: 12px; }
+    .profile-btn {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--accent-grad); display: flex; align-items: center; justify-content: center;
+      font-size: 16px; cursor: pointer; border: none; flex-shrink: 0;
+    }
+
+    /* ── Panels (tab content) ── */
+    .panel { display: none; padding: 28px 32px; }
+    .panel.active { display: block; }
+
+    /* ── Stat Cards Row ── */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { padding: 20px; }
+    .stat-card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px; }
+    .stat-card-value { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; }
+    .stat-card-sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+    /* ── Score Ring ── */
+    .score-ring-wrap {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 32px;
+    }
+    .score-ring-container { position: relative; width: 180px; height: 180px; }
+    .score-ring-svg { transform: rotate(-90deg); }
+    .score-ring-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 14; }
+    .score-ring-fill { fill: none; stroke-width: 14; stroke-linecap: round; transition: stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1), stroke 0.5s; }
+    .score-ring-text {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .score-ring-number { font-family: 'Space Grotesk', sans-serif; font-size: 40px; font-weight: 800; }
+    .score-ring-label { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .score-ring-cat { margin-top: 16px; font-size: 15px; font-weight: 700; }
+    .score-ring-emoji { font-size: 24px; margin-top: 6px; }
+
+    /* ── Dashboard grid ── */
+    .dash-grid { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
+    .dash-grid-left { display: flex; flex-direction: column; gap: 20px; }
+    .chart-card { padding: 24px; }
+    .chart-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .chart-card p { font-size: 12px; color: var(--text-secondary); margin-bottom: 20px; }
+    .chart-wrap { position: relative; height: 220px; }
+
+    /* ── Posts feed ── */
+    .posts-list { display: flex; flex-direction: column; gap: 12px; }
+    .post-item { padding: 16px 20px; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border); transition: var(--transition); }
+    .post-item:hover { border-color: var(--border-glow); }
+    .post-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .post-meta { display: flex; align-items: center; gap: 8px; }
+    .post-source { font-size: 11px; color: var(--text-muted); }
+    .post-time { font-size: 11px; color: var(--text-muted); }
+    .post-text { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+    .post-keywords { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .keyword-tag { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+    .kw-crisis   { background: rgba(255,59,48,0.12); color: var(--crisis); }
+    .kw-high     { background: rgba(255,107,53,0.12); color: var(--high); }
+    .kw-moderate { background: rgba(255,149,0,0.12); color: var(--moderate); }
+    .kw-positive { background: rgba(52,199,89,0.12); color: var(--healthy); }
+
+    /* ── Analyze panel ── */
+    .analyze-wrap { max-width: 700px; }
+    .analyze-result {
+      margin-top: 24px; padding: 24px; border-radius: var(--radius-md);
+      background: var(--bg-card); border: 1px solid var(--border); display: none;
+    }
+    .analyze-result.show { display: block; animation: fadeInUp 0.4s ease; }
+    .result-score-big { font-family: 'Space Grotesk', sans-serif; font-size: 56px; font-weight: 800; }
+    .result-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    .result-item label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); display: block; margin-bottom: 4px; }
+    .result-item value { font-size: 15px; font-weight: 600; }
+    .progress-bar-wrap { height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+    .progress-bar { height: 100%; border-radius: 4px; transition: width 1s ease; }
+
+    /* ── Guardian panel ── */
+    .guardian-form { max-width: 520px; display: flex; flex-direction: column; gap: 14px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-group label { font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 6px; }
+    .guardians-list { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+    .guardian-card { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .guardian-info h4 { font-size: 15px; font-weight: 700; }
+    .guardian-info p { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .guardian-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .threshold-badge { font-size: 11px; padding: 3px 8px; background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.25); border-radius: 6px; }
+
+    /* ── Alerts panel ── */
+    .alert-item { padding: 16px 20px; border-left: 3px solid var(--crisis); margin-bottom: 12px; }
+    .alert-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .alert-guardian { font-size: 14px; font-weight: 700; }
+    .alert-score { font-size: 13px; font-weight: 700; color: var(--crisis); }
+    .alert-msg { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    .alert-time { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+    .alert-status { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+    .status-simulated { background: rgba(255,204,0,0.12); color: var(--mild); }
+    .status-sent { background: rgba(52,199,89,0.12); color: var(--healthy); }
+
+    /* ── Tips card ── */
+    .tips-card { padding: 20px; }
+    .tips-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+    .tip-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-secondary); }
+    .tip-item:last-child { border-bottom: none; }
+    .tip-icon { font-size: 18px; flex-shrink: 0; }
+
+    /* ── Section headers ── */
+    .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    .section-head h2 { font-size: 18px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; }
+
+    /* ── Empty state ── */
+    .empty { text-align: center; padding: 48px; color: var(--text-muted); }
+    .empty .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty p { font-size: 14px; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000;
+      display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+    }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; width: 420px; max-width: 90vw; }
+    .modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+    .modal-actions { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .dash-grid { grid-template-columns: 1fr; }
+      .topbar { padding: 16px 20px; }
+      .panel { padding: 20px; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <a href="index.html">
+          <span class="sidebar-logo-icon">🧠</span>
+          <span class="sidebar-logo-text gradient-text">PulseNet</span>
+        </a>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-panel="overview" id="nav-overview">
+          <span class="icon">📊</span> Overview
+        </button>
+        <button class="nav-item" data-panel="analyze" id="nav-analyze">
+          <span class="icon">🔍</span> Analyze Text
+        </button>
+        <button class="nav-item" data-panel="history" id="nav-history">
+          <span class="icon">📜</span> Post History
+        </button>
+        <button class="nav-item" data-panel="guardians" id="nav-guardians">
+          <span class="icon">🤝</span> Guardians
+        </button>
+        <button class="nav-item" data-panel="alerts" id="nav-alerts">
+          <span class="icon">🔔</span> Alerts
+          <span class="notif-dot" id="alertDot" style="display:none;margin-left:auto;"></span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="api-status">
+          <div class="api-dot" id="apiDot"></div>
+          <span id="apiStatusText">Connecting…</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- TOPBAR -->
+      <div class="topbar">
+        <div class="topbar-title">
+          <h1 id="panelTitle">Wellness Overview</h1>
+          <p id="panelSub">Your 7-day emotional trend</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost btn-sm" id="seedBtn">🌱 Load Demo Data</button>
+          <button class="btn btn-primary btn-sm" id="refreshBtn">↻ Refresh</button>
+          <button class="btn btn-ghost btn-sm" id="logoutBtn" style="color:var(--crisis);border-color:rgba(255,59,48,0.3);">↩ Logout</button>
+          <button class="profile-btn" id="profileBtn" title="Profile">👤</button>
+        </div>
+      </div>
+
+      <!-- ══ OVERVIEW PANEL ══ -->
+      <div class="panel active" id="panel-overview">
+        <!-- Stats row -->
+        <div class="stats-row">
+          <div class="stat-card card">
+            <div class="stat-card-label">Current Score</div>
+            <div class="stat-card-value" id="statCurrent" style="color:var(--healthy)">--</div>
+            <div class="stat-card-sub" id="statCurrentCat">Loading…</div>
+          </div>
+          <div class="stat-card card">
+            <div class="stat-card-label">7-Day Average</div>
+            <div class="stat-card-value gradient-text" id="statAvg">--</div>
+            <div class="stat-card-sub">Rolling average</div>
+          </div>
+          <div class="stat-card card">
+            <div class="stat-card-label">Peak Score</div>
+            <div class="stat-card-value" id="statPeak" style="color:var(--high)">--</div>
+            <div class="stat-card-sub">All-time high</div>
+          </div>
+          <div class="stat-card card">
+            <div class="stat-card-label">Posts Analyzed</div>
+            <div class="stat-card-value" id="statTotal" style="color:var(--accent)">--</div>
+            <div class="stat-card-sub">Total posts</div>
+          </div>
+        </div>
+
+        <!-- Main grid -->
+        <div class="dash-grid">
+          <!-- Left: Score ring + Tips -->
+          <div class="dash-grid-left">
+            <div class="card score-ring-wrap">
+              <div class="score-ring-container">
+                <svg class="score-ring-svg" width="180" height="180" viewBox="0 0 180 180">
+                  <circle class="score-ring-bg" cx="90" cy="90" r="76"/>
+                  <circle class="score-ring-fill" id="ringFill" cx="90" cy="90" r="76"
+                    stroke-dasharray="477.5" stroke-dashoffset="477.5" stroke="#34C759"/>
+                </svg>
+                <div class="score-ring-text">
+                  <div class="score-ring-number" id="ringNumber">0</div>
+                  <div class="score-ring-label">/ 100</div>
+                </div>
+              </div>
+              <div class="score-ring-cat" id="ringCat">Healthy</div>
+              <div class="score-ring-emoji" id="ringEmoji">😊</div>
+            </div>
+
+            <div class="card tips-card">
+              <div class="tips-title">💡 Wellness Tips</div>
+              <div id="tipsList">
+                <div class="tip-item"><span class="tip-icon">🧘</span>Take 5 deep breaths when feeling overwhelmed</div>
+                <div class="tip-item"><span class="tip-icon">🚶</span>A 10-min walk can shift your mood significantly</div>
+                <div class="tip-item"><span class="tip-icon">📞</span>Reach out to one person you trust today</div>
+                <div class="tip-item"><span class="tip-icon">✍️</span>Journal your feelings for 5 minutes</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Chart + Recent Posts -->
+          <div style="display:flex;flex-direction:column;gap:20px;">
+            <div class="card chart-card">
+              <h3>7-Day Distress Trend</h3>
+              <p>Your emotional journey this week</p>
+              <div class="chart-wrap">
+                <canvas id="trendChart"></canvas>
+              </div>
+            </div>
+
+            <div class="card" style="padding:24px;">
+              <div class="section-head">
+                <h2>Recent Posts</h2>
+                <button class="btn btn-ghost btn-sm" data-panel="history" id="viewAllBtn">View all →</button>
+              </div>
+              <div class="posts-list" id="recentPostsList">
+                <div class="empty"><div class="empty-icon">📭</div><p>No posts yet. Load demo data or analyze some text.</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ ANALYZE PANEL ══ -->
+      <div class="panel" id="panel-analyze">
+        <div class="analyze-wrap">
+          <div class="section-head">
+            <div>
+              <h2>Analyze Text</h2>
+              <p style="font-size:13px;color:var(--text-secondary);margin-top:4px;">Paste any social media caption or text to analyze its distress level instantly</p>
+            </div>
+          </div>
+          <textarea class="textarea" id="analyzeText" placeholder="Paste a social media post or write something here…" style="min-height:140px;font-size:15px;"></textarea>
+          <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;">
+            <button class="btn btn-primary" id="analyzeBtn">🧠 Analyze Now</button>
+            <button class="btn btn-ghost" id="savePostBtn" style="display:none;">💾 Save to History</button>
+            <button class="btn btn-ghost" id="clearAnalyzeBtn">✕ Clear</button>
+          </div>
+
+          <div class="analyze-result" id="analyzeResult">
+            <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:8px;">
+              <div class="result-score-big" id="resultScore">0</div>
+              <div style="padding-bottom:12px;">
+                <div style="font-size:13px;color:var(--text-muted);">/ 100</div>
+                <div id="resultCat" style="font-size:15px;font-weight:700;">Healthy</div>
+              </div>
+              <div id="resultEmoji" style="font-size:40px;margin-left:auto;padding-bottom:8px;">😊</div>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar" id="resultBar" style="width:0%;background:var(--healthy);"></div>
+            </div>
+            <div class="result-row" style="margin-top:20px;">
+              <div class="result-item"><label>Sentiment</label><value id="resultSentiment">—</value></div>
+              <div class="result-item"><label>Words Analyzed</label><value id="resultWords">—</value></div>
+              <div class="result-item"><label>Crisis Detected</label><value id="resultCrisis">—</value></div>
+              <div class="result-item"><label>Analyzed At</label><value id="resultTime">—</value></div>
+            </div>
+            <div class="divider"></div>
+            <div><div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Detected Keywords</div>
+              <div class="post-keywords" id="resultKeywords"></div>
+            </div>
+          </div>
+
+          <!-- Demo texts -->
+          <div style="margin-top:28px;">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;">Try these examples</div>
+            <div style="display:flex;flex-direction:column;gap:8px;" id="demoTexts">
+              <button class="btn btn-ghost btn-sm demo-text" style="justify-content:flex-start;text-align:left;white-space:normal;height:auto;padding:10px 14px;" data-text="I feel so hopeless and alone. Nobody cares what happens to me. I just want to disappear.">😰 Crisis example</button>
+              <button class="btn btn-ghost btn-sm demo-text" style="justify-content:flex-start;text-align:left;white-space:normal;height:auto;padding:10px 14px;" data-text="Been really struggling with anxiety lately. Everything feels overwhelming and I can't sleep.">😟 Moderate example</button>
+              <button class="btn btn-ghost btn-sm demo-text" style="justify-content:flex-start;text-align:left;white-space:normal;height:auto;padding:10px 14px;" data-text="Had an amazing day! Feeling so grateful for my friends and family. Life is beautiful 🌸">😊 Healthy example</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ HISTORY PANEL ══ -->
+      <div class="panel" id="panel-history">
+        <div class="section-head">
+          <h2>Post History</h2>
+          <span style="font-size:13px;color:var(--text-secondary);" id="historyCount">All analyzed posts</span>
+        </div>
+        <div class="posts-list" id="historyList">
+          <div class="empty"><div class="empty-icon">📭</div><p>No posts yet.</p></div>
+        </div>
+      </div>
+
+      <!-- ══ GUARDIANS PANEL ══ -->
+      <div class="panel" id="panel-guardians">
+        <div class="section-head">
+          <h2>Guardian Network</h2>
+          <span style="font-size:13px;color:var(--text-secondary);">Trusted people who will be notified in a crisis</span>
+        </div>
+
+        <!-- Add form -->
+        <div class="card" style="padding:24px;margin-bottom:24px;">
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;">➕ Add Guardian</h3>
+          <div class="guardian-form">
+            <div class="form-row">
+              <div class="form-group"><label>Name *</label><input class="input" id="gName" placeholder="Full name"></div>
+              <div class="form-group"><label>Email</label><input class="input" id="gEmail" type="email" placeholder="email@example.com"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Phone</label><input class="input" id="gPhone" placeholder="+91 9876543210"></div>
+              <div class="form-group"><label>Alert Threshold (0-100)</label><input class="input" id="gThreshold" type="number" min="50" max="100" value="70"></div>
+            </div>
+            <button class="btn btn-primary" id="addGuardianBtn" style="width:fit-content;">💾 Add Guardian</button>
+          </div>
+        </div>
+
+        <!-- Guardians list -->
+        <div class="section-head"><h2>Your Guardians</h2></div>
+        <div class="guardians-list" id="guardiansList">
+          <div class="empty"><div class="empty-icon">🤝</div><p>No guardians added yet. Add a trusted person above.</p></div>
+        </div>
+      </div>
+
+      <!-- ══ ALERTS PANEL ══ -->
+      <div class="panel" id="panel-alerts">
+        <div class="section-head">
+          <h2>Alert History</h2>
+          <span style="font-size:13px;color:var(--text-secondary);">Guardian notifications sent when thresholds were crossed</span>
+        </div>
+        <div id="alertsList">
+          <div class="empty"><div class="empty-icon">🔔</div><p>No alerts yet. Alerts fire when distress score crosses the guardian's threshold.</p></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Profile Modal -->
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal">
+      <h3>👤 Your Profile</h3>
+      <div class="form-group" style="margin-bottom:14px;"><label>Display Name</label><input class="input" id="profileName" placeholder="Your name"></div>
+      <div class="form-group"><label>Email</label><input class="input" id="profileEmail" type="email" placeholder="email@example.com"></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="closeProfileModal">Cancel</button>
+        <button class="btn btn-primary" id="saveProfileBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

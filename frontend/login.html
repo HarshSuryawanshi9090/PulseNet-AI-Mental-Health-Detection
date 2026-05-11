@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Login or create your PulseNet account — AI Mental Health Early Warning System">
+  <title>PulseNet — Login</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+
+    /* ── Auth Card ── */
+    .auth-wrap { width: 100%; max-width: 440px; position: relative; z-index: 1; }
+
+    .auth-logo {
+      text-align: center; margin-bottom: 32px;
+    }
+    .auth-logo-icon { font-size: 48px; display: block; margin-bottom: 10px; animation: pulse-ring 2s ease-in-out infinite; }
+    .auth-logo-name {
+      font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 800;
+      background: linear-gradient(135deg, #00D4FF, #7C3AED);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .auth-logo-sub { font-size: 13px; color: var(--text-secondary); margin-top: 6px; }
+
+    .auth-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px;
+      padding: 36px;
+      backdrop-filter: blur(24px);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    }
+
+    /* ── Tabs ── */
+    .auth-tabs {
+      display: flex; background: rgba(255,255,255,0.04); border-radius: 12px;
+      padding: 4px; margin-bottom: 28px; gap: 4px;
+    }
+    .auth-tab {
+      flex: 1; padding: 10px; border: none; border-radius: 9px; cursor: pointer;
+      font-family: inherit; font-size: 14px; font-weight: 600; transition: all 0.25s;
+      background: transparent; color: var(--text-secondary);
+    }
+    .auth-tab.active {
+      background: linear-gradient(135deg, #00D4FF, #7C3AED);
+      color: #fff; box-shadow: 0 4px 12px rgba(0,212,255,0.25);
+    }
+
+    /* ── Forms ── */
+    .auth-form { display: none; }
+    .auth-form.active { display: block; animation: fadeInUp 0.3s ease; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block; font-size: 12px; font-weight: 700;
+      color: var(--text-secondary); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .form-input-wrap { position: relative; }
+    .form-input-wrap .input-icon {
+      position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+      font-size: 16px; color: var(--text-muted); pointer-events: none;
+    }
+    .form-input-wrap .input { padding-left: 40px; }
+    .form-input-wrap .input.no-icon { padding-left: 14px; }
+    .input-toggle {
+      position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--text-muted); cursor: pointer;
+      font-size: 16px; padding: 0; transition: color 0.2s;
+    }
+    .input-toggle:hover { color: var(--accent); }
+
+    .auth-btn {
+      width: 100%; padding: 13px; border-radius: 12px; border: none; cursor: pointer;
+      font-family: inherit; font-size: 15px; font-weight: 700;
+      background: linear-gradient(135deg, #00D4FF, #7C3AED); color: #fff;
+      margin-top: 6px; transition: all 0.3s; position: relative; overflow: hidden;
+    }
+    .auth-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,212,255,0.35); }
+    .auth-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .auth-btn .btn-content { display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+    /* ── Alert / Error ── */
+    .auth-alert {
+      padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 500;
+      margin-bottom: 16px; display: none; animation: fadeInUp 0.25s ease;
+    }
+    .auth-alert.error {
+      background: rgba(255,59,48,0.12); border: 1px solid rgba(255,59,48,0.3); color: var(--crisis);
+      display: block;
+    }
+    .auth-alert.success {
+      background: rgba(52,199,89,0.12); border: 1px solid rgba(52,199,89,0.3); color: var(--healthy);
+      display: block;
+    }
+
+    /* ── Strength meter ── */
+    .strength-bar-wrap { height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; margin-top: 8px; display: none; }
+    .strength-bar { height: 100%; border-radius: 2px; width: 0; transition: width 0.4s, background 0.4s; }
+    .strength-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+    /* ── Divider ── */
+    .auth-divider { text-align: center; position: relative; margin: 20px 0; color: var(--text-muted); font-size: 12px; }
+    .auth-divider::before, .auth-divider::after {
+      content: ''; position: absolute; top: 50%; height: 1px;
+      width: calc(50% - 24px); background: var(--border);
+    }
+    .auth-divider::before { left: 0; }
+    .auth-divider::after { right: 0; }
+
+    /* ── Feature list on side ── */
+    .auth-features {
+      text-align: center; margin-top: 24px;
+      display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;
+    }
+    .auth-feature { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+    .auth-feature span { font-size: 14px; }
+
+    /* ── Helplines footer ── */
+    .auth-footer { text-align: center; margin-top: 20px; }
+    .auth-footer p { font-size: 11px; color: var(--text-muted); }
+    .auth-footer a { color: var(--accent); text-decoration: none; }
+
+    @media (max-width: 480px) { .auth-card { padding: 24px 20px; } }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <div class="auth-wrap">
+    <!-- Logo -->
+    <div class="auth-logo">
+      <span class="auth-logo-icon">🧠</span>
+      <div class="auth-logo-name">PulseNet</div>
+      <div class="auth-logo-sub">AI Mental Health Early Warning System</div>
+    </div>
+
+    <!-- Card -->
+    <div class="auth-card">
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Sign In</button>
+        <button class="auth-tab" id="tabRegister" onclick="switchTab('register')">Create Account</button>
+      </div>
+
+      <!-- Alert -->
+      <div class="auth-alert" id="authAlert"></div>
+
+      <!-- LOGIN FORM -->
+      <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Email Address</label>
+          <div class="form-input-wrap">
+            <span class="input-icon">✉️</span>
+            <input class="input" type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <div class="form-input-wrap">
+            <span class="input-icon">🔒</span>
+            <input class="input" type="password" id="loginPassword" placeholder="Enter your password" required autocomplete="current-password">
+            <button type="button" class="input-toggle" onclick="togglePwd('loginPassword', this)">👁️</button>
+          </div>
+        </div>
+
+        <button class="auth-btn" type="submit" id="loginBtn">
+          <div class="btn-content">Sign In to Dashboard</div>
+        </button>
+      </form>
+
+      <!-- REGISTER FORM -->
+      <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label>Username</label>
+          <div class="form-input-wrap">
+            <span class="input-icon">👤</span>
+            <input class="input" type="text" id="regUsername" placeholder="Choose a username" required minlength="3" autocomplete="username">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <div class="form-input-wrap">
+            <span class="input-icon">✉️</span>
+            <input class="input" type="email" id="regEmail" placeholder="you@example.com" required autocomplete="email">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <div class="form-input-wrap">
+            <span class="input-icon">🔒</span>
+            <input class="input" type="password" id="regPassword" placeholder="Create a strong password" required minlength="6" autocomplete="new-password" oninput="checkStrength(this.value)">
+            <button type="button" class="input-toggle" onclick="togglePwd('regPassword', this)">👁️</button>
+          </div>
+          <div class="strength-bar-wrap" id="strengthWrap">
+            <div class="strength-bar" id="strengthBar"></div>
+          </div>
+          <div class="strength-label" id="strengthLabel"></div>
+        </div>
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <div class="form-input-wrap">
+            <span class="input-icon">🔑</span>
+            <input class="input" type="password" id="regConfirm" placeholder="Repeat your password" required autocomplete="new-password">
+            <button type="button" class="input-toggle" onclick="togglePwd('regConfirm', this)">👁️</button>
+          </div>
+        </div>
+
+        <button class="auth-btn" type="submit" id="registerBtn">
+          <div class="btn-content">Create My Account</div>
+        </button>
+      </form>
+
+      <div class="auth-divider">consent-based · privacy first</div>
+      <div class="auth-features">
+        <div class="auth-feature"><span>🔒</span> Data stays local</div>
+        <div class="auth-feature"><span>🧠</span> AI-powered</div>
+        <div class="auth-feature"><span>🤝</span> Guardian alerts</div>
+        <div class="auth-feature"><span>📊</span> Trend analytics</div>
+      </div>
+    </div>
+
+    <div class="auth-footer">
+      <p>Crisis? Call iCall <a href="tel:9152987821">9152987821</a> · AASRA <a href="tel:9820466627">9820466627</a></p>
+    </div>
+  </div>
+
+<script>
+const API = "http://localhost:5000/api";
+
+// ── Tab switching ──────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById("loginForm").classList.toggle("active", tab === "login");
+  document.getElementById("registerForm").classList.toggle("active", tab === "register");
+  document.getElementById("tabLogin").classList.toggle("active", tab === "login");
+  document.getElementById("tabRegister").classList.toggle("active", tab === "register");
+  hideAlert();
+}
+
+// ── Password visibility toggle ─────────────────────────────────────────────────
+function togglePwd(inputId, btn) {
+  const input = document.getElementById(inputId);
+  input.type = input.type === "password" ? "text" : "password";
+  btn.textContent = input.type === "password" ? "👁️" : "🙈";
+}
+
+// ── Password strength ──────────────────────────────────────────────────────────
+function checkStrength(pwd) {
+  const wrap  = document.getElementById("strengthWrap");
+  const bar   = document.getElementById("strengthBar");
+  const label = document.getElementById("strengthLabel");
+  wrap.style.display = "block";
+
+  let score = 0;
+  if (pwd.length >= 8) score++;
+  if (/[A-Z]/.test(pwd)) score++;
+  if (/[0-9]/.test(pwd)) score++;
+  if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+  const levels = [
+    { pct: "25%",  color: "#FF3B30", text: "Weak" },
+    { pct: "50%",  color: "#FF9500", text: "Fair" },
+    { pct: "75%",  color: "#FFCC00", text: "Good" },
+    { pct: "100%", color: "#34C759", text: "Strong" },
+  ];
+  const l = levels[Math.max(0, score - 1)] || levels[0];
+  bar.style.width = l.pct;
+  bar.style.background = l.color;
+  label.textContent = `Password strength: ${l.text}`;
+  label.style.color = l.color;
+}
+
+// ── Alerts ─────────────────────────────────────────────────────────────────────
+function showAlert(msg, type = "error") {
+  const el = document.getElementById("authAlert");
+  el.textContent = (type === "error" ? "⚠️ " : "✅ ") + msg;
+  el.className = `auth-alert ${type}`;
+}
+function hideAlert() { document.getElementById("authAlert").className = "auth-alert"; }
+
+// ── Login ──────────────────────────────────────────────────────────────────────
+async function handleLogin(e) {
+  e.preventDefault(); hideAlert();
+  const btn = document.getElementById("loginBtn");
+  btn.disabled = true;
+  btn.querySelector(".btn-content").innerHTML = '<span class="spinner"></span> Signing in…';
+
+  const res = await fetch(`${API}/auth/login`, {
+    method: "POST", credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: document.getElementById("loginEmail").value.trim(),
+      password: document.getElementById("loginPassword").value,
+    }),
+  }).catch(() => null);
+
+  btn.disabled = false;
+  btn.querySelector(".btn-content").textContent = "Sign In to Dashboard";
+
+  if (!res) { showAlert("Cannot reach the server. Is the backend running?"); return; }
+  const data = await res.json();
+  if (res.ok) {
+    showAlert("Welcome back! Redirecting…", "success");
+    setTimeout(() => { window.location.href = "/dashboard"; }, 800);
+  } else {
+    showAlert(data.error || "Invalid credentials");
+  }
+}
+
+// ── Register ───────────────────────────────────────────────────────────────────
+async function handleRegister(e) {
+  e.preventDefault(); hideAlert();
+  const pwd     = document.getElementById("regPassword").value;
+  const confirm = document.getElementById("regConfirm").value;
+  if (pwd !== confirm) { showAlert("Passwords do not match"); return; }
+
+  const btn = document.getElementById("registerBtn");
+  btn.disabled = true;
+  btn.querySelector(".btn-content").innerHTML = '<span class="spinner"></span> Creating account…';
+
+  const res = await fetch(`${API}/auth/register`, {
+    method: "POST", credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: document.getElementById("regUsername").value.trim(),
+      email:    document.getElementById("regEmail").value.trim(),
+      password: pwd,
+    }),
+  }).catch(() => null);
+
+  btn.disabled = false;
+  btn.querySelector(".btn-content").textContent = "Create My Account";
+
+  if (!res) { showAlert("Cannot reach the server. Is the backend running?"); return; }
+  const data = await res.json();
+  if (res.ok) {
+    showAlert("Account created! Redirecting to dashboard…", "success");
+    setTimeout(() => { window.location.href = "/dashboard"; }, 900);
+  } else {
+    showAlert(data.error || "Registration failed");
+  }
+}
+
+// ── Auto-redirect if already logged in ────────────────────────────────────────
+(async () => {
+  try {
+    const res = await fetch(`${API}/auth/me`, { credentials: "include" });
+    if (res.ok) window.location.href = "/dashboard";
+  } catch {}
+})();
+</script>
+</body>
+</html>
