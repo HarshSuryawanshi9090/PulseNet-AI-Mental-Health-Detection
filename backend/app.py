@@ -13,7 +13,11 @@ import model, database, guardian as guardian_module
 
 app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="/app")
 app.secret_key = os.getenv("PULSENET_SECRET", "pulsenet-dev-secret-change-in-prod")
-CORS(app, supports_credentials=True, origins=["http://localhost:5000", "http://127.0.0.1:5000"])
+CORS(app, supports_credentials=True, origins=[
+    "http://localhost:5000",
+    "http://127.0.0.1:5000",
+    os.getenv("FRONTEND_ORIGIN", "*")   # set this on Render if needed
+])
 database.init_db()
 
 
