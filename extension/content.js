@@ -4,7 +4,7 @@
  * Only runs if user has given consent (stored in chrome.storage).
  */
 
-const API_BASE = "http://localhost:5000/api";
+let API_BASE = "http://localhost:5000/api";
 const ANALYZED_ATTR = "data-pulsenet-analyzed";
 const INTERVAL_MS = 8000;
 
@@ -73,8 +73,9 @@ function scanPage(selector) {
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
-chrome.storage.sync.get(["pulsenet_enabled"], ({ pulsenet_enabled }) => {
+chrome.storage.sync.get(["pulsenet_enabled", "pulsenet_api_url"], ({ pulsenet_enabled, pulsenet_api_url }) => {
   if (pulsenet_enabled === false) return;
+  if (pulsenet_api_url) API_BASE = pulsenet_api_url;
 
   const selector = getSiteSelector();
   if (!selector) return;

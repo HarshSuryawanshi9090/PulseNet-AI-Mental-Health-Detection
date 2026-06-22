@@ -2,7 +2,7 @@
 import sqlite3, os, json
 from datetime import datetime, timedelta
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "pulsenet.db")
+DB_PATH = os.getenv("PULSENET_DB_PATH", os.path.join(os.path.dirname(__file__), "pulsenet.db"))
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (

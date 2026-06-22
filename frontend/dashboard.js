@@ -3,7 +3,7 @@
  * Handles all API calls, Chart.js rendering, score ring, and UI updates.
  */
 
-const API = "http://localhost:5000/api";
+const API = (window.location.protocol === "file:") ? "http://localhost:5000/api" : "/api";
 
 const CAT_COLOR = {
   "Healthy": "#34C759", "Mild Distress": "#FFCC00",

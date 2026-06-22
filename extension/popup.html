@@ -113,6 +113,19 @@
       <button class="btn btn-ghost" id="clearBtn">🗑️ Clear Badge</button>
     </div>
 
+    <!-- API Configuration Panel -->
+    <div style="margin-top: 10px;">
+      <button class="btn btn-ghost" id="settingsToggleBtn" style="width: 100%; justify-content: space-between; font-size: 11px; padding: 6px 12px; border-radius: 8px;">
+        <span>⚙️ API Configuration</span>
+        <span id="settingsArrow">▼</span>
+      </button>
+      <div id="settingsPanel" style="display: none; margin-top: 8px; padding: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; flex-direction: column; gap: 8px;">
+        <label style="font-size: 10px; color: #8B9AB3; font-weight: 600; text-transform: uppercase; text-align: left; display: block;">Backend API URL</label>
+        <input type="text" id="apiUrlInput" placeholder="http://localhost:5000/api" style="width: 100%; padding: 8px 10px; background: #121625; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #F0F4FF; font-family: inherit; font-size: 11px; outline: none; transition: border-color 0.2s;">
+        <button class="btn btn-primary" id="saveSettingsBtn" style="padding: 6px; font-size: 11px; border-radius: 6px; margin-top: 4px;">Save Config</button>
+      </div>
+    </div>
+
     <div class="sites">
       <div class="sites-label">Active on</div>
       <div class="site-tags">
