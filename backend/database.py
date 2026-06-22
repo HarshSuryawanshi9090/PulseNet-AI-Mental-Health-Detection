@@ -4,6 +4,24 @@ from datetime import datetime, timedelta
 
 DB_PATH = os.getenv("PULSENET_DB_PATH", os.path.join(os.path.dirname(__file__), "pulsenet.db"))
 
+# Validate writability of DB directory, fallback to local project path if not writable
+db_dir = os.path.dirname(DB_PATH)
+if db_dir:
+    if not os.path.exists(db_dir):
+        try:
+            os.makedirs(db_dir, exist_ok=True)
+        except Exception:
+            DB_PATH = os.path.join(os.path.dirname(__file__), "pulsenet.db")
+            db_dir = os.path.dirname(DB_PATH)
+    if os.path.exists(db_dir):
+        try:
+            test_file = os.path.join(db_dir, ".writetest")
+            with open(test_file, "w") as f:
+                f.write("")
+            os.remove(test_file)
+        except Exception:
+            DB_PATH = os.path.join(os.path.dirname(__file__), "pulsenet.db")
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,12 +77,6 @@ def get_connection():
     return conn
 
 def init_db():
-    db_dir = os.path.dirname(DB_PATH)
-    if db_dir and not os.path.exists(db_dir):
-        try:
-            os.makedirs(db_dir, exist_ok=True)
-        except Exception:
-            pass
     conn = get_connection()
     conn.executescript(SCHEMA)
     cur = conn.cursor()
