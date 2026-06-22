@@ -73,8 +73,12 @@ saveSettingsBtn.addEventListener("click", () => {
   if (url.endsWith("/")) {
     url = url.slice(0, -1);
   }
+  if (!url.endsWith("/api")) {
+    url += "/api";
+  }
   chrome.storage.sync.set({ pulsenet_api_url: url }, () => {
     alert("✅ API Configuration saved!");
+    apiUrlInput.value = url; // Update input field to show corrected URL
     settingsPanel.style.display = "none";
     settingsArrow.textContent = "▼";
   });
