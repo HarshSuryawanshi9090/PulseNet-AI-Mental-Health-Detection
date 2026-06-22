@@ -16,6 +16,8 @@ services:
         generateValue: true
       - key: PYTHON_VERSION
         value: 3.11.0
-      - key: PULSENET_DB_PATH
-        value: /data/pulsenet.db  # Use persistent path if disk is enabled, otherwise defaults to local DB
+      # Uncomment the key below if you mount a persistent disk at /data
+      # - key: PULSENET_DB_PATH
+      #   value: /data/pulsenet.db
+
 

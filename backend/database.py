@@ -59,6 +59,12 @@ def get_connection():
     return conn
 
 def init_db():
+    db_dir = os.path.dirname(DB_PATH)
+    if db_dir and not os.path.exists(db_dir):
+        try:
+            os.makedirs(db_dir, exist_ok=True)
+        except Exception:
+            pass
     conn = get_connection()
     conn.executescript(SCHEMA)
     cur = conn.cursor()
